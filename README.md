@@ -1,40 +1,127 @@
-# HealthLens---AI-Health-Prediction-RAG-Advisory-System
+# HealthLens - AI Health Prediction & RAG Advisory System
 
-An AI-powered health prediction and advisory system that combines machine learning models with Retrieval-Augmented Generation (RAG) to provide personalized health insights and medical guidance.
+HealthLens is a comprehensive, AI-powered healthcare platform that predicts disease risks (Heart Disease, Diabetes, Hypertension) and provides personalized lifestyle advice via an integrated FAISS + HuggingFace FLAN-T5 RAG system. It also integrates manual health tracking and smartwatch data forms (Google Fit mock integrations).
 
-## Dashboard & Insights
+---
 
-### System Overview
-![Dashboard Screenshot](docs/screenshots/dashboard-screenshot.png)
+## 📊 Project Overview
 
-The HealthLens dashboard provides:
-- **Predictive Diagnostics**: Real-time disease risk predictions for Heart Disease, Diabetes, and Hypertension
-- **Health Metrics Tracking**: Monitor age, BMI, heart rate, glucose levels, daily steps, and sleep hours
-- **Prognostic Risk Trends**: Visual trending of health metrics over time
-- **AI Health Advisor**: WHO Guidelines-based recommendations using RAG for personalized medical advice
-- **Interactive Chatbot**: Query health information with natural language queries
+### Dashboard View
+![HealthLens Dashboard](docs/screenshots/dashboard-screenshot.png)
 
-## Features
+The HealthLens dashboard features:
+- **Real-time Disease Risk Predictions** - Heart Disease, Diabetes Type II, and Hypertension risk assessment
+- **Health Metrics Monitoring** - Track age, BMI, heart rate, glucose levels, daily steps, and sleep hours
+- **Prognostic Risk Trends** - Visual trend analysis showing disease risk progression over time
+- **AI Health Advisor** - RAG-powered WHO Guidelines-based personalized medical recommendations
+- **Interactive Chatbot** - Natural language health queries with intelligent responses
 
-- ML-based prediction models for multiple health conditions
-- RAG-powered AI advisor with medical guidelines
-- Real-time health monitoring dashboard
-- Personalized health recommendations
-- RESTful API backend
-- Modern React frontend with Tailwind CSS
+---
 
-## Tech Stack
+## Project Structure
+- `backend/` - FastAPI application connecting machine learning inferences, MongoDB tracking, and the RAG advisor logic.
+- `frontend/` - React + TailwindCSS + Vite dashboard for health monitoring, graphs, and chat UI.
+- `ml/` - Sklearn/XGBoost pipelines utilizing SMOTE and GridSearch to output serialized artifacts model weights.
+- `rag/` - FAISS retrieval and generative pipelines utilizing `sentence-transformers` for embedding generation.
+- `data/` - Target repository for incoming batch CSV files.
 
-- **Frontend**: React, Vite, Tailwind CSS
-- **Backend**: Python, FastAPI
-- **ML**: scikit-learn, TensorFlow/PyTorch
-- **RAG**: LangChain, Vector Database
-- **Database**: PostgreSQL/MongoDB
+---
 
-## Getting Started
+## 🛠 Setup Instructions
 
-[Installation and setup instructions coming soon]
+### 1. Database (MongoDB)
+Add a `.env` file in `healthlens/backend/` and populate:
+```
+MONGO_URI=mongodb+srv://healthlens:<your_password>@cluster0...
+GOOGLE_CLIENT_ID=your_provided_client_id
+GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/callback
+```
 
-## License
+### 2. Generate ML Models
+```bash
+cd healthlens/ml
+pip install -r ../backend/requirements.txt
+pip install imbalanced-learn
+python train_models.py
+```
+*(This places the `.pkl` models required by FastAPI into `healthlens/backend/app/models/`)*
 
-MIT
+### 3. Start Backend
+```bash
+cd healthlens/backend
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+API Documentation will be available at: `http://localhost:8000/docs`
+
+### 4. Start Frontend
+```bash
+cd healthlens/frontend
+npm install
+npm run dev
+```
+
+---
+
+## ⚡ Sample API Requests
+
+### 1. Predict All Health Risks (POST)
+**Endpoint:** `http://localhost:8000/api/predict/all`  
+```json
+{
+  "age": 45,
+  "bmi": 28.5,
+  "heart_rate": 78,
+  "glucose": 110.0,
+  "steps": 4000,
+  "sleep_hours": 6.0,
+  "gender": "male",
+  "blood_pressure": "130/85"
+}
+```
+**Expected Response:**
+```json
+{
+  "heart_risk": 64.2,
+  "diabetes_risk": 55.1,
+  "hypertension_risk": 71.8,
+  "risk_level": {
+    "heart": "Medium",
+    "diabetes": "Medium",
+    "hypertension": "High"
+  }
+}
+```
+
+### 2. Connect Smartwatch (Google Fit Proxy) (GET)
+**Endpoint:** `http://localhost:8000/api/user/health-data`
+**Expected Response:**
+```json
+{
+  "heart_rate": 72,
+  "steps": 6500,
+  "calories": 2100,
+  "sleep_hours": 7.5
+}
+```
+
+### 3. RAG Health Advisor Chatbot (POST)
+**Endpoint:** `http://localhost:8000/api/chat`
+```json
+{
+  "query": "How to lower my high blood pressure and hypertension risk?"
+}
+```
+**Expected Response:**
+```json
+{
+  "response": "Hypertension (high blood pressure) can be controlled by a low-salt diet like the DASH diet, reducing daily stress, and avoiding excessive alcohol consumption.",
+  "query": "How to lower my high blood pressure and hypertension risk?"
+}
+```
+
+---
+
+## Deployment (Production Guide)
+- **Frontend**: Connect the `healthlens/frontend` folder to **Vercel** or **Netlify**. Ensure environment variables for the API URLs are updated to the backend host.
+- **Backend/RAG/ML**: Deploy `healthlens/backend` via Docker on **Render**, **AWS ECS**, or **Google Cloud Run**. Ensure the saved models inside `/app/models` are bundled into the container deployment.
